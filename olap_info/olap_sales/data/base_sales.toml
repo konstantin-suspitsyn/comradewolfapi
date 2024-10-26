@@ -1,0 +1,17 @@
+table = "sales_base"
+schema = "olap"
+database = "olap_db1"
+base_table = "true"
+
+[fields]
+order_id = {field_type = "dimension", alias = "order_id_alias", calculation_type = "none", following_calculation = "none", front_name = "Номер заказа", data_type="number"}
+qty_order = {field_type = "value", alias = "qty_order_alias", calculation_type = "none", following_calculation = "none", front_name = "Кол-во заказанного", data_type="number"}
+price = {field_type = "dimension", alias = "price_alias", calculation_type = "none", following_calculation = "none", front_name = "Цена", data_type="number"}
+purchase_address = {field_type = "dimension", alias = "purchase_address_alias", calculation_type = "none", following_calculation = "none", front_name = "Адрес", data_type="text"}
+product_id = {field_type = "service_key", alias = "product_id_alias", calculation_type = "none", following_calculation = "none", front_name = "none", data_type="number"}
+year_f = {field_type = "dimension", alias = "year_f_alias", calculation_type = "none", following_calculation = "none", front_name = "Год", data_type="number"}
+month_f = {field_type = "dimension", alias = "month_f_alias", calculation_type = "none", following_calculation = "none", front_name = "Месяц", data_type="number"}
+day_f = {field_type = "dimension", alias = "day_f_alias", calculation_type = "none", following_calculation = "none", front_name = "День", data_type="number"}
+week_f = {field_type = "dimension", alias = "week_f_alias", calculation_type = "none", following_calculation = "none", front_name = "Неделя", data_type="number"}
+year_month_f = {field_type = "dimension", alias = "year_month_f_alias", calculation_type = "none", following_calculation = "none", front_name = "ГодМес", data_type="number"}
+year_week_f = {field_type = "dimension", alias = "year_week_f_alias", calculation_type = "none", following_calculation = "none", front_name = "ГодНеделя", data_type="number"}
