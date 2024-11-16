@@ -1,5 +1,4 @@
-from typing import Optional
-
+from comradewolf.utils.enums_and_field_dicts import FilterTypes, WhereConditionType
 from pydantic import BaseModel
 
 
@@ -15,12 +14,12 @@ class CalculationFrontendPayload(BaseModel):
 
 class WhereFrontendPayload(BaseModel):
     field_name: str
-    where: str
+    where: WhereConditionType
     condition: str | list[str]
 
 
 
-class FrontendJson(BaseModel):
+class FrontendFieldsJson(BaseModel):
     """
     JSON from frontend
     """
@@ -28,6 +27,21 @@ class FrontendJson(BaseModel):
     SELECT: list[SelectFrontendPayload]
     CALCULATION: list[CalculationFrontendPayload]
     WHERE: list[WhereFrontendPayload]
+
+
+class FrontendDistinctStructure(BaseModel):
+    """
+    FrontendDistinctFields inner structure
+    """
+    field_name: str
+    type: FilterTypes
+
+
+class FrontendDistinctJson(BaseModel):
+    """
+    Structure to query to get dimension helper for filters
+    """
+    SELECT_DISTINCT: FrontendDistinctStructure
 
 
 class QueryMetaData(BaseModel):

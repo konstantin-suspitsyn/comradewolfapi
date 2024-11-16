@@ -4,7 +4,7 @@ from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from model.dto import FrontendJson, QueryMetaData
+from model.dto import FrontendFieldsJson, QueryMetaData
 from olap_info.olap_sales_cube import set_cube
 from service.db_service import save_query_meta_data
 

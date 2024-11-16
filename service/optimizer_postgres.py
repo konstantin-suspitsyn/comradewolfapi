@@ -2,10 +2,11 @@ import math
 import time
 from threading import Semaphore
 
-from comradewolf.utils.olap_data_types import SelectCollection
-from sqlalchemy import Engine, text, CursorResult
+from comradewolf.utils.olap_data_types import SelectCollection, SelectFilter
+from sqlalchemy import Engine, text, CursorResult, Sequence
 
 from core.config import Settings
+from core.utils.exceptions import NoQuery
 from model.dto import QueryMetaData
 from service.optimizer_interface import OptimizerAbstract
 
@@ -66,8 +67,6 @@ class OptimizerPostgres(OptimizerAbstract):
         self.__connections_semaphore.acquire()
         print("SEM_START", self.__connections_semaphore)
         try:
-
-
             with engine.connect() as connect:
                 result = connect.execute(text(sql_query))
         finally:
@@ -120,17 +119,65 @@ class OptimizerPostgres(OptimizerAbstract):
         is_ok_to_download_data: bool = False
 
         rows_no: int
-        engine: Engine = self.get_engine()
 
-        self.__connections_semaphore.acquire()
-
-        try:
-            with engine.connect() as connect:
-                rows_no = connect.execute(text(sql_count)).fetchone()[0]
-        finally:
-            self.__connections_semaphore.release()
+        rows_no = self.run_select_query_to_olap_db(sql_count).fetchone()[0]
 
         if rows_no <= max_rows_no:
             is_ok_to_download_data = True
 
         return rows_no, is_ok_to_download_data
+
+    def select_dimension(self, select_filter: SelectFilter) -> CursorResult:
+        """
+        Selects data from db with unique values for dimension
+        :param select_filter:
+        :return:
+        """
+
+        query: str = self.select_best_filter_query(select_filter)
+
+        returned_data = self.run_select_query_to_olap_db(query)
+
+        return returned_data
+
+    def run_select_query_to_olap_db(self, query: str) -> CursorResult:
+        """
+        Run select sql-query to OLAP database
+        :param query: sql-query
+        :return: CursorResult that needs to be fetched
+        """
+
+        engine = self.get_engine()
+
+        self.__connections_semaphore.acquire()
+        try:
+            with engine.connect() as connect:
+                returned_data = connect.execute(text(query))
+        finally:
+            self.__connections_semaphore.release()
+
+        return returned_data
+
+    def select_best_filter_query(self, select_filter: SelectFilter) -> str:
+        """
+        Choose best filter query
+        :param select_filter:
+        :return: sql-query
+        """
+
+        number_of_unselected_fields: int | None = None
+        query: str | None = None
+
+        for table in select_filter:
+            if number_of_unselected_fields is None:
+                number_of_unselected_fields = select_filter.get_not_selected_fields(table)
+                query = select_filter.get_sql(table)
+
+            if number_of_unselected_fields > select_filter.get_not_selected_fields(table):
+                number_of_unselected_fields = select_filter.get_not_selected_fields(table)
+                query = select_filter.get_sql(table)
+
+        if query is None:
+            raise NoQuery
+
+        return query

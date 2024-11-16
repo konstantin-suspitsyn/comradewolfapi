@@ -3,12 +3,14 @@ from collections import UserDict
 from comradewolf.universe.olap_prompt_converter_service import OlapPromptConverterService
 from comradewolf.universe.olap_service import OlapService
 from comradewolf.universe.olap_structure_generator import OlapStructureGenerator
-from comradewolf.utils.olap_data_types import OlapFrontend, SelectCollection, OlapFrontendToBackend
+from comradewolf.utils.olap_data_types import OlapFrontend, SelectCollection, OlapFrontendToBackend, OlapFilterFrontend, \
+    OlapTablesCollection, SelectFilter
+from sqlalchemy import Sequence, RowMapping
 from sqlalchemy.orm import Session
 
 from core.utils.exceptions import NoCubeInCollection
 from model.base_model import SavedQuery
-from model.dto import FrontendJson, QueryMetaData
+from model.dto import FrontendFieldsJson, QueryMetaData, FrontendDistinctJson
 from service.optimizer_interface import OptimizerAbstract
 
 
@@ -120,10 +122,12 @@ class CubeCollection(UserDict):
 
         return self.data[cube_name]["olap_service"]
 
-    def get_query_meta(self, cube_name: str, front_data: FrontendJson) -> QueryMetaData:
+    def get_query_meta(self, cube_name: str, front_data: FrontendFieldsJson, add_order_by: bool) -> QueryMetaData:
         """
         Chooses select statement through optimizer
         Writes select statement to database to select later
+        :param add_order_by: Add order by to query or not
+            Add it if you want to download data using offset-limit
         :param cube_name: name of the cube
         :param front_data: dictionary with fields and conditions that user demands
         :return: QueryMetaData with query number, number of pages, number of rows per page and total number of rows
@@ -132,16 +136,19 @@ class CubeCollection(UserDict):
         frontend_dict: dict = front_data.model_dump(mode='json')
 
         optimizer: OptimizerAbstract = self.get_optimizer(cube_name)
-        select_collection: SelectCollection = self.get_all_queries(cube_name, frontend_dict)
+        select_collection: SelectCollection = self.get_all_queries(cube_name, frontend_dict, add_order_by)
         query_meta_data: QueryMetaData = optimizer.get_query_meta_data(cube_name, select_collection)
 
         return query_meta_data
 
-    def get_all_queries(self, cube_name: str, front_data: dict) -> SelectCollection:
+    def get_all_queries(self, cube_name: str, front_data: dict, add_order_by: bool) -> SelectCollection:
         """
         Gets all possible queries from the cube with front_data user needs
+
         :param cube_name: name of the cube
         :param front_data: dictionary with fields and conditions that user demands
+        :param add_order_by: Add order by to query or not
+            You should add it if you plan download data by pages
 
         :raises NoCubeInCollection: if  :param cube_name: was not found in collection
 
@@ -155,15 +162,16 @@ class CubeCollection(UserDict):
         frontend_to_backend_type: OlapFrontendToBackend = prompt_service\
             .create_frontend_to_backend(front_data, olap_frontend_fields)
 
-        return olap_service.select_data(frontend_to_backend_type, olap_structure.get_tables_collection())
+        return olap_service.select_data(frontend_to_backend_type, olap_structure.get_tables_collection(), add_order_by)
 
-    def select_data_by_pages(self, cube_name: str, query_id: int, page: int, db: Session):
+    def select_data_by_pages(self, cube_name: str, query_id: int, page: int, db: Session) -> Sequence[RowMapping]:
         """
+        Gets data from OLAP database by previously saved query in QueryMetaData
 
-        :param cube_name:
-        :param query_id:
-        :param page:
-        :param db:
+        :param cube_name: name of the cube
+        :param query_id: query id of SavedQuery
+        :param page: page no to be downloaded query works as offset-limit kind
+        :param db: db Session
         :return:
         """
 
@@ -176,14 +184,33 @@ class CubeCollection(UserDict):
         sql = saved_query.query
         items_per_page = saved_query.items_per_page
 
-        # Получить данные
+        # Retrieve data
         data_from_db = self.get_optimizer(cube_name=cube_name).select_page_from_olap(
             sql=sql, page_no=page, items_per_page=items_per_page)
 
-        # Конвертировать CursorResult и вернуть
-        dict_from_db = data_from_db.mappings().all()
+        # Convert to smth similar to dict
+        dict_from_db: Sequence[RowMapping] = data_from_db.mappings().all()
 
         return dict_from_db
+
+    def select_dimension(self, cube_name: str, dimension_field: FrontendDistinctJson):
+        """
+        Selects data for one dimension that should be used as
+        :param cube_name:
+        :param dimension_field:
+        :return:
+        """
+        front_data_dict: dict = dimension_field.model_dump(mode='json')
+        front_to_back = OlapFilterFrontend(front_data_dict)
+
+        olap_service: OlapService = self.get_olap_service(cube_name)
+        tables_collection: OlapTablesCollection = self.get_olap_structure(cube_name).get_tables_collection()
+
+        select_filter: SelectFilter = olap_service.select_filter_for_frontend(front_to_back, tables_collection)
+
+        optimizer: OptimizerAbstract = self.get_optimizer(cube_name)
+
+        dimension_from_db = optimizer.select_dimension(select_filter)
 
 
 

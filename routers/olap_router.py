@@ -3,14 +3,14 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from core.database import get_db
-from model.dto import FrontendJson, QueryMetaData, QueryDTO
+from model.dto import FrontendFieldsJson, QueryMetaData, QueryDTO, FrontendDistinctJson
 from service.db_service import save_query_meta_data
 from service.cube import CubeCollection
 
 router = APIRouter()
 
 @router.get("/v1/cube/{cube_name}/front-fields")
-async def get_front_fields(cube_name: str, request: Request):
+def get_front_fields(cube_name: str, request: Request):
     """
     Query to retrieve info about
     :param request: standard requests
@@ -22,7 +22,7 @@ async def get_front_fields(cube_name: str, request: Request):
 
 
 @router.get("/v1/cube/{cube_name}/query_info")
-def get_query_info(cube_name: str, front_data: FrontendJson, request: Request, db: Session = Depends(get_db)) \
+def get_query_info(cube_name: str, front_data: FrontendFieldsJson, request: Request, db: Session = Depends(get_db)) \
         -> QueryDTO:
     """
     Get query id, number of pages and items per page
@@ -34,13 +34,16 @@ def get_query_info(cube_name: str, front_data: FrontendJson, request: Request, d
     :return: QueryDTO
     """
 
+    # We want to get data using limit-offset
+    add_order_by: bool = True
+
     front_data_dict: dict = front_data.model_dump(mode='json')
 
     cubes: CubeCollection = request.state.cubes
 
-    query_info: QueryMetaData = cubes.get_query_meta(cube_name, front_data)
+    query_info: QueryMetaData = cubes.get_query_meta(cube_name, front_data, add_order_by)
 
-    qry = save_query_meta_data(db, query_info, front_data_dict)
+    qry: QueryMetaData = save_query_meta_data(db, query_info, front_data_dict)
 
     query_dto: QueryDTO = QueryDTO(id = qry.id, pages=qry.pages, items_per_page=qry.items_per_page)
 
@@ -50,10 +53,36 @@ def get_query_info(cube_name: str, front_data: FrontendJson, request: Request, d
 @router.get("/v1/cube/{cube_name}/query_id/{query_id}")
 def get_data_by_page(cube_name: str, query_id: int, request: Request, page: int = 0,
                            db: Session = Depends(get_db)):
+    """
+    Gets data from OLAP database by previously saved query in QueryMetaData
 
+    :param cube_name: Name of the cube
+    :param query_id: query id of SavedQuery
+    :param request: starlette Request. No need to be provided
+    :param page: page no to be downloaded query works as offset-limit kind
+    :param db: dependency injected Session
+    :return: converted to dict data from database
+    """
 
     cubes: CubeCollection = request.state.cubes
 
-    result: dict = cubes.select_data_by_pages(cube_name, query_id, page, db)
+    result = cubes.select_data_by_pages(cube_name, query_id, page, db)
+
+    return result
+
+@router.get("/v1/cube/{cube_name}/dimension")
+def get_dimension(cube_name: str, dimension_field: FrontendDistinctJson, request: Request):
+    """
+    Gets data from OLAP database with data of current dimension. To help frontend users use filters
+
+    :param dimension_field:
+    :param cube_name: Name of the cube
+    :param request: starlette Request. No need to be provided
+    :return: converted JSON data from database
+    """
+
+    cubes: CubeCollection = request.state.cubes
+
+    result = cubes.select_dimension(cube_name, dimension_field)
 
     return result

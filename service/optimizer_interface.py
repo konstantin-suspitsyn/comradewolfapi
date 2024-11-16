@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from threading import Semaphore
 
-from comradewolf.utils.olap_data_types import SelectCollection
-from sqlalchemy import Engine, CursorResult
+from comradewolf.utils.olap_data_types import SelectCollection, SelectFilter
+from sqlalchemy import Engine, CursorResult, Sequence
 
 from core.config import Settings
 from model.dto import QueryMetaData
@@ -93,3 +93,21 @@ class OptimizerAbstract(ABC):
         :param items_per_page: how many items per page
         :return: Cursor result from query
         """
+
+    @abstractmethod
+    def select_dimension(self, select_filter: SelectFilter) -> CursorResult:
+        """
+        Selects data from db with unique values for dimension
+        :param select_filter: SelectFilter from frontend
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def select_best_filter_query(self, select_filter: SelectFilter) -> str:
+        """
+        Choose best filter query
+        :param select_filter: SelectFilter from frontend
+        :return: best select as str
+        """
+        pass
