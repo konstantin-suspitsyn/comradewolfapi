@@ -1,6 +1,5 @@
 from comradewolf.utils.enums_and_field_dicts import FilterTypes, WhereConditionType
-from pydantic import BaseModel
-
+from pydantic import BaseModel, EmailStr
 
 
 class SelectFrontendPayload(BaseModel):
@@ -55,3 +54,18 @@ class QueryDTO(BaseModel):
     id: int
     pages: int
     items_per_page: int
+
+class UserRegisterDTO(BaseModel):
+    """
+    User register. Comes from frontend
+    """
+    username: str
+    password: str
+    email: EmailStr
+
+class MessageOnly(BaseModel):
+    """
+    Send any message
+    """
+    message: str
+

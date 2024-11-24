@@ -5,7 +5,7 @@ from comradewolf.universe.olap_service import OlapService
 from comradewolf.universe.olap_structure_generator import OlapStructureGenerator
 from comradewolf.utils.olap_data_types import OlapFrontend, SelectCollection, OlapFrontendToBackend, OlapFilterFrontend, \
     OlapTablesCollection, SelectFilter
-from sqlalchemy import Sequence, RowMapping
+from sqlalchemy import Sequence, RowMapping, CursorResult
 from sqlalchemy.orm import Session
 
 from core.utils.exceptions import NoCubeInCollection
@@ -193,7 +193,7 @@ class CubeCollection(UserDict):
 
         return dict_from_db
 
-    def select_dimension(self, cube_name: str, dimension_field: FrontendDistinctJson):
+    def select_dimension(self, cube_name: str, dimension_field: FrontendDistinctJson) -> Sequence[RowMapping]:
         """
         Selects data for one dimension that should be used as
         :param cube_name:
@@ -210,7 +210,6 @@ class CubeCollection(UserDict):
 
         optimizer: OptimizerAbstract = self.get_optimizer(cube_name)
 
-        dimension_from_db = optimizer.select_dimension(select_filter)
+        dimension_from_db: CursorResult = optimizer.select_dimension(select_filter)
 
-
-
+        return dimension_from_db.mappings().all()

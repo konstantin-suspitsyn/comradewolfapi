@@ -4,7 +4,7 @@ from starlette.requests import Request
 
 from core.database import get_db
 from model.dto import FrontendFieldsJson, QueryMetaData, QueryDTO, FrontendDistinctJson
-from service.db_service import save_query_meta_data
+from service.db import save_query_meta_data
 from service.cube import CubeCollection
 
 router = APIRouter()

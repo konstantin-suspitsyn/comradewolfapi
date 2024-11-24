@@ -1,15 +1,10 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Depends
-from sqlalchemy.orm import Session
+from fastapi import FastAPI
 
-from core.database import get_db
-from model.dto import FrontendFieldsJson, QueryMetaData
 from olap_info.olap_sales_cube import set_cube
-from service.db_service import save_query_meta_data
 
-
-from routers import olap_router
+from routers.v1 import olap_router, user_router
 
 
 def return_postgres_opt():
@@ -28,5 +23,4 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(olap_router.router)
-
-
+app.include_router(user_router.router)

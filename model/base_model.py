@@ -1,7 +1,8 @@
 from datetime import datetime
+from typing import List
 
-from sqlalchemy import Integer, Column, String, DateTime, Boolean
-from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
+from sqlalchemy import Integer, Column, String, DateTime, Boolean, ForeignKey
+from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
 
 
 class Base(DeclarativeBase):
@@ -28,8 +29,11 @@ class AppUser(Base):
     password: Mapped[str] = Column(String(256))
     email: Mapped[str] = Column(String(250), unique=True)
     is_active: Mapped[bool] = Column(Boolean, default=False)
-    created_at: Mapped[datetime] = Column(DateTime, default=datetime.now)
+    created_at: Mapped[datetime] = Column(DateTime)
     updated_at: Mapped[datetime] = Column(DateTime, default=datetime.now)
+
+    confirmation_codes: Mapped[List["ConfirmationCode"]] = relationship(back_populates="user")
+
 
 class SavedQuery(Base):
     __tablename__ = "saved_query"
@@ -39,3 +43,16 @@ class SavedQuery(Base):
     query: Mapped[str] = mapped_column(String(), unique=False)
     pages: Mapped[str] = mapped_column(Integer)
     items_per_page: Mapped[int] = mapped_column(Integer)
+
+class ConfirmationCode(Base):
+    __tablename__ = "confirmation_code"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code: Mapped[str] = Column(String(256))
+    active: Mapped[bool] = Column(Boolean, default=True)
+    created_at: Mapped[datetime] = Column(DateTime)
+    expires_at: Mapped[datetime] = Column(DateTime)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("comradewolf.app_user.id"))
+    user: Mapped["AppUser"] = relationship(back_populates="confirmation_codes")
+
