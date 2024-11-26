@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.utils.exceptions import UserAlreadyExists, UserWithMailAlreadyExists, NoConfirmationCode, UserIsActiveAlready, \
-    CodeActivationExpired
-from model.dto import UserRegisterDTO, MessageOnly
-from service.user import create_new_user, activate_user_code
+    CodeActivationExpired, UserIsNotActivated, WrongPassword, UserNotFound
+from model.dto import UserRegisterDTO, MessageOnly, AuthenticateDTO, Token
+from service.user import create_new_user, activate_user_code, authenticate_user_and_return_jwt
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/user/authenticate")
@@ -49,11 +49,26 @@ def activate_user(code: str, db: Session = Depends(get_db)):
     return message
 
 
-
 # @router.get("/v1/user/forgot_password")
 # def forgot_password():
 #     pass
-#
-# @router.get("/v1/user/authenticate")
-# def forgot_auth():
-#     pass
+
+@router.post("/v1/user/authenticate", response_model=Token)
+def auth(authenticate: AuthenticateDTO, db: Session = Depends(get_db)):
+
+    jwt: str
+
+    try:
+        jwt = authenticate_user_and_return_jwt(authenticate.user, authenticate.password, db)
+    except (UserIsNotActivated, UserNotFound):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail=f"Пользователя не существует или он не активирован")
+    except WrongPassword:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail=f"Пароль некорректный")
+
+    token: Token = Token(access_token=jwt, token_type="bearer")
+
+    return token
+
+

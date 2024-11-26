@@ -69,3 +69,19 @@ class MessageOnly(BaseModel):
     """
     message: str
 
+
+class AuthenticateDTO(BaseModel):
+    """
+    Login-password
+    """
+    user: str
+    password: str
+
+
+class Token(BaseModel):
+    """
+    JWToken
+    """
+    access_token: str
+    token_type: str
+

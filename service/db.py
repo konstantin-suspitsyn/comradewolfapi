@@ -105,3 +105,7 @@ def set_user_active(app_user: AppUser, db: Session):
 
     db.flush()
     db.commit()
+
+def get_user_by_username(username: str, db: Session) -> AppUser | None:
+    app_user: AppUser | None = db.query(AppUser).filter(AppUser.username == username).first()
+    return app_user

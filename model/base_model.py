@@ -26,7 +26,7 @@ class AppUser(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     username: Mapped[str] = Column(String(50), unique=True)
-    password: Mapped[str] = Column(String(256))
+    password: Mapped[str] = Column(String(512))
     email: Mapped[str] = Column(String(250), unique=True)
     is_active: Mapped[bool] = Column(Boolean, default=False)
     created_at: Mapped[datetime] = Column(DateTime)
