@@ -26,6 +26,8 @@ class Settings:
     EXPIRE_JWT_IN: int = 24 * 60 * 60
     # Expiration time in seconds
     EXPIRE_CONFIRMATION_CODE: int = 24 * 60 * 60
+    #Password expiration time in seconds
+    EXPIRE_PASSWORD_RESTORATION_CODE = 24 * 60 * 60
 
     # All about mail
     MAIL_SERVER = os.getenv("MAIL_SERVER")

@@ -2,8 +2,9 @@ import json
 
 from sqlalchemy.orm import Session
 
-from core.utils.exceptions import UserAlreadyExists, UserWithMailAlreadyExists, NoConfirmationCode, UserNotFound
-from model.base_model import SavedQuery, AppUser, ConfirmationCode
+from core.utils.exceptions import UserAlreadyExists, UserWithMailAlreadyExists, NoConfirmationCode, UserNotFound, \
+    NoForgotPasswordCode
+from model.base_model import SavedQuery, AppUser, ConfirmationCode, ForgotPasswordCode
 from model.dto import QueryMetaData
 
 
@@ -96,6 +97,12 @@ def create_confirmation_code(new_confirmation_code: ConfirmationCode, db: Sessio
     return new_confirmation_code
 
 def set_user_active(app_user: AppUser, db: Session):
+    """
+    Change user state to active
+    :param app_user: AppUser that needs to be changed
+    :param db:
+    :return:
+    """
     current_app_user: AppUser | None = db.query(AppUser).filter(AppUser.id == app_user.id).first()
 
     if current_app_user is None:
@@ -109,3 +116,52 @@ def set_user_active(app_user: AppUser, db: Session):
 def get_user_by_username(username: str, db: Session) -> AppUser | None:
     app_user: AppUser | None = db.query(AppUser).filter(AppUser.username == username).first()
     return app_user
+
+def get_forgot_password_code_by_username(username: str, db: Session) -> ForgotPasswordCode | None:
+    app_user: AppUser | None = get_user_by_username(username, db)
+
+    if app_user is None:
+        raise UserNotFound
+
+    forgot_password_code: ForgotPasswordCode | None = db.query(ForgotPasswordCode).filter(
+        ForgotPasswordCode.user_id == app_user.id, ForgotPasswordCode.is_active == True).first()
+
+    return forgot_password_code
+
+def get_forgot_password_code_by_code(code: str, db: Session) -> ForgotPasswordCode | None:
+    forgot_password_code: ForgotPasswordCode | None = db.query(ForgotPasswordCode).filter(
+        ForgotPasswordCode.code == code).first()
+
+    return forgot_password_code
+
+def create_forgot_password_code(forgot_password_code: ForgotPasswordCode, db: Session) -> ForgotPasswordCode:
+    db.add(forgot_password_code)
+    db.commit()
+    db.refresh(forgot_password_code)
+
+    return forgot_password_code
+
+def deactivate_password_code(code: str, db: Session) -> None:
+    forgot_password_code: ForgotPasswordCode | None = get_forgot_password_code_by_code(code, db)
+    if forgot_password_code is None:
+        raise NoForgotPasswordCode
+
+    forgot_password_code.is_active = False
+
+    db.flush()
+    db.commit()
+
+
+def get_user_by_id(user_id: int, db: Session):
+    app_user: AppUser | None = db.query(AppUser).filter(AppUser.id == user_id).first()
+
+    return app_user
+
+def change_password_for_user_with_id(user_id: int, password: str, db: Session):
+    app_user: AppUser = get_user_by_id(user_id, db)
+
+    app_user.password = password
+
+    db.flush()
+    db.commit()
+    

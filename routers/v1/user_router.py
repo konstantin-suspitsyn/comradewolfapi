@@ -5,14 +5,22 @@ from sqlalchemy.orm import Session
 from core.database import get_db
 from core.utils.exceptions import UserAlreadyExists, UserWithMailAlreadyExists, NoConfirmationCode, UserIsActiveAlready, \
     CodeActivationExpired, UserIsNotActivated, WrongPassword, UserNotFound
-from model.dto import UserRegisterDTO, MessageOnly, AuthenticateDTO, Token
-from service.user import create_new_user, activate_user_code, authenticate_user_and_return_jwt
+from model.dto import UserRegisterDTO, MessageOnly, AuthenticateDTO, Token, ChangeForgottenPassword
+from service.user import create_new_user, activate_user_code, authenticate_user_and_return_jwt, \
+    send_forgot_password_code
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/user/authenticate")
 
-@router.post("/v1/user/register", status_code=status.HTTP_201_CREATED)
+@router.post("/v1/user/register", status_code=status.HTTP_201_CREATED, response_model=MessageOnly)
 def register_user(user_dto: UserRegisterDTO, db: Session = Depends(get_db)) -> MessageOnly:
+    """
+    Register user
+
+    :param user_dto: UserRegisterDTO
+    :param db:
+    :return:
+    """
 
     middle_activation_link: str = r"v1/user/activate"
 
@@ -29,8 +37,19 @@ def register_user(user_dto: UserRegisterDTO, db: Session = Depends(get_db)) -> M
 
     return user_was_created
 
-@router.get("/v1/user/activate/{code}", status_code=status.HTTP_202_ACCEPTED)
-def activate_user(code: str, db: Session = Depends(get_db)):
+@router.get("/v1/user/activate/{code}", status_code=status.HTTP_202_ACCEPTED, response_model=MessageOnly)
+def activate_user(code: str, db: Session = Depends(get_db)) -> MessageOnly:
+    """
+    Activates user using activation code coming from email
+    :param code: activation code
+    :param db:
+
+    :raises NoConfirmationCode: if no activation code
+    :raises UserIsActiveAlready: if user already active
+    :raises CodeActivationExpired: code is expired
+
+    :return:
+    """
 
     message: MessageOnly = MessageOnly(message="Пользователь активирован")
 
@@ -49,12 +68,23 @@ def activate_user(code: str, db: Session = Depends(get_db)):
     return message
 
 
-# @router.get("/v1/user/forgot_password")
-# def forgot_password():
-#     pass
+@router.get("/v1/user/forgot_password", response_model=MessageOnly)
+def forgot_password(username: str, db: Session = Depends(get_db)):
+    """
+    Sends code to email with
+
+    :param username:
+    :param db:
+    :return:
+    """
+    send_forgot_password_code(username, db)
+
+@router.get("/v1/user/change_forgotten_password", response_model=MessageOnly)
+def change_forgotten_password(change_password_dto:ChangeForgottenPassword, db: Session = Depends(get_db)):
+    change_password_with_code(change_password_dto, db)
 
 @router.post("/v1/user/authenticate", response_model=Token)
-def auth(authenticate: AuthenticateDTO, db: Session = Depends(get_db)):
+def auth(authenticate: AuthenticateDTO, db: Session = Depends(get_db)) -> Token:
 
     jwt: str
 

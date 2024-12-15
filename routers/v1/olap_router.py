@@ -3,9 +3,11 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from core.database import get_db
+from model.base_model import SavedQuery
 from model.dto import FrontendFieldsJson, QueryMetaData, QueryDTO, FrontendDistinctJson
 from service.db import save_query_meta_data
 from service.cube import CubeCollection
+from service.security import get_user_from_jwt, cube_security_check
 
 router = APIRouter()
 
@@ -22,17 +24,21 @@ def get_front_fields(cube_name: str, request: Request):
 
 
 @router.get("/v1/cube/{cube_name}/query_info")
-def get_query_info(cube_name: str, front_data: FrontendFieldsJson, request: Request, db: Session = Depends(get_db)) \
-        -> QueryDTO:
+def get_query_info(cube_name: str, front_data: FrontendFieldsJson, request: Request, db: Session = Depends(get_db),
+                   username: str = Depends(get_user_from_jwt)) -> QueryDTO:
     """
     Get query id, number of pages and items per page
 
+    :param username: username from JWT will be used for auth and cube access confirmation
     :param request: standard request
     :param db: required db connection
     :param cube_name: Name of the cube
     :param front_data: JSON payload with data, that we want to get from cube
     :return: QueryDTO
     """
+
+    cube_security_check(username, cube_name, db)
+
 
     # We want to get data using limit-offset
     add_order_by: bool = True
@@ -43,7 +49,7 @@ def get_query_info(cube_name: str, front_data: FrontendFieldsJson, request: Requ
 
     query_info: QueryMetaData = cubes.get_query_meta(cube_name, front_data, add_order_by)
 
-    qry: QueryMetaData = save_query_meta_data(db, query_info, front_data_dict)
+    qry: SavedQuery = save_query_meta_data(db, query_info, front_data_dict)
 
     query_dto: QueryDTO = QueryDTO(id = qry.id, pages=qry.pages, items_per_page=qry.items_per_page)
 

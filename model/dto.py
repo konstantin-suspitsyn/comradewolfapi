@@ -85,3 +85,6 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+class ChangeForgottenPassword(BaseModel):
+    forgot_code_token: str
+    password: str

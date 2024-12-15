@@ -9,6 +9,9 @@ NO_CONFIRMATION_CODE = 8
 USER_IS_ACTIVE = 9
 CODE_EXPIRED = 10
 USER_IS_NOT_ACTIVE = 11
+PASSWORD_CODE_EXPIRED = 12
+PASSWORD_CODE_EXISTS = 13
+NO_FORGOT_PASSWORD_CODE = 14
 
 class ComradeWolfApiException(Exception):
     """
@@ -129,3 +132,33 @@ class UserIsNotActivated(ComradeWolfApiException):
         message: str = f"User is not activated"
 
         super().__init__(USER_IS_NOT_ACTIVE, message)
+
+class ForgotPasswordCodeExpired(ComradeWolfApiException):
+    """
+    Password confirmation code was not found
+    """
+
+    def __init__(self):
+        message: str = f"Password code is expired"
+
+        super().__init__(PASSWORD_CODE_EXPIRED, message)
+
+class ForgotPasswordExists(ComradeWolfApiException):
+    """
+    Password confirmation code was not found
+    """
+
+    def __init__(self):
+        message: str = f"Password code exists"
+
+        super().__init__(PASSWORD_CODE_EXISTS, message)
+
+class NoForgotPasswordCode(ComradeWolfApiException):
+    """
+    Password confirmation code was not found
+    """
+
+    def __init__(self):
+        message: str = f"Password code does not exist"
+
+        super().__init__(NO_FORGOT_PASSWORD_CODE, message)

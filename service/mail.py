@@ -28,3 +28,10 @@ def send_confirmation_mail(code: str, email_to: str, middle_link: str):
 
     send_html_mail(html_message, email_to, subject)
 
+def send_forgot_password_mail(code: str, email_to: str) -> None:
+    subject: str = "Код подтверждения"
+
+    html_message: str = f"""Код подтверждения для смены пароля: {code}"""
+
+    send_html_mail(html_message, email_to, subject)
+
