@@ -164,4 +164,8 @@ def change_password_for_user_with_id(user_id: int, password: str, db: Session):
 
     db.flush()
     db.commit()
-    
+
+def deactivate_forgotten_password_code(forgot_password_code: ForgotPasswordCode, db: Session):
+    forgot_password_code.is_active = False
+    db.flush()
+    db.commit()

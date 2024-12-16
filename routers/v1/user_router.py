@@ -4,10 +4,10 @@ from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.utils.exceptions import UserAlreadyExists, UserWithMailAlreadyExists, NoConfirmationCode, UserIsActiveAlready, \
-    CodeActivationExpired, UserIsNotActivated, WrongPassword, UserNotFound
+    CodeActivationExpired, UserIsNotActivated, WrongPassword, UserNotFound, ForgotPasswordExists
 from model.dto import UserRegisterDTO, MessageOnly, AuthenticateDTO, Token, ChangeForgottenPassword
 from service.user import create_new_user, activate_user_code, authenticate_user_and_return_jwt, \
-    send_forgot_password_code
+    send_forgot_password_code, change_password_with_code
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/user/authenticate")
@@ -71,20 +71,47 @@ def activate_user(code: str, db: Session = Depends(get_db)) -> MessageOnly:
 @router.get("/v1/user/forgot_password", response_model=MessageOnly)
 def forgot_password(username: str, db: Session = Depends(get_db)):
     """
-    Sends code to email with
+    Sends code to email to restore password
 
     :param username:
     :param db:
     :return:
     """
-    send_forgot_password_code(username, db)
 
-@router.get("/v1/user/change_forgotten_password", response_model=MessageOnly)
+    try:
+        send_forgot_password_code(username, db)
+    except ForgotPasswordExists:
+        raise HTTPException(status_code=status.HTTP_417_EXPECTATION_FAILED,
+                            detail=f"Код уже существует. Поищите его в почте")
+
+    message: MessageOnly = MessageOnly(message="Код восстановления отправлен вам на Email")
+
+    return message
+
+@router.post("/v1/user/change_forgotten_password", response_model=MessageOnly)
 def change_forgotten_password(change_password_dto:ChangeForgottenPassword, db: Session = Depends(get_db)):
+    """
+    Change forgotten password
+
+    :param change_password_dto:
+    :param db:
+    :return:
+    """
     change_password_with_code(change_password_dto, db)
+
+    message: MessageOnly = MessageOnly(message="Пароль изменен")
+
+    return message
 
 @router.post("/v1/user/authenticate", response_model=Token)
 def auth(authenticate: AuthenticateDTO, db: Session = Depends(get_db)) -> Token:
+    """
+    Authenticate User
+
+    :param authenticate:
+    :param db:
+    :return:
+    """
 
     jwt: str
 
@@ -100,5 +127,3 @@ def auth(authenticate: AuthenticateDTO, db: Session = Depends(get_db)) -> Token:
     token: Token = Token(access_token=jwt, token_type="bearer")
 
     return token
-
-

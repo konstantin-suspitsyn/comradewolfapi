@@ -4,12 +4,13 @@ from sqlalchemy.orm import Session
 
 from core.config import settings
 from core.utils.exceptions import UserNotFound, WrongPassword, NoConfirmationCode, UserIsActiveAlready, \
-    CodeActivationExpired, UserIsNotActivated, ForgotPasswordCodeExpired, ForgotPasswordExists, NoForgotPasswordCode
+    CodeActivationExpired, UserIsNotActivated, ForgotPasswordExists, NoForgotPasswordCode
 from model.base_model import AppUser, ConfirmationCode, ForgotPasswordCode
 from model.dto import UserRegisterDTO, ChangeForgottenPassword
 from service.db import create_user, get_confirmation_code, deactivate_code_for_user, set_user_active, \
     get_user_by_username, get_forgot_password_code_by_username, create_forgot_password_code, deactivate_password_code, \
-    get_forgot_password_code_by_code, get_user_by_id, change_password_for_user_with_id
+    get_forgot_password_code_by_code, get_user_by_id, change_password_for_user_with_id, \
+    deactivate_forgotten_password_code
 from service.mail import send_confirmation_mail, send_forgot_password_mail
 from service.security import create_jwt, hash_password, generate_confirmation_code, check_password, \
     generate_random_string
@@ -99,6 +100,7 @@ def send_forgot_password_code(username: str, db: Session) -> None:
 
     :param username:
     :param db:
+    :raises ForgotPasswordExists:
     :return:
     """
     app_user: AppUser = get_user_by_username(username, db)
@@ -111,7 +113,6 @@ def send_forgot_password_code(username: str, db: Session) -> None:
         if existing_code.expires_at < datetime.now():
             # Deactivate code
             deactivate_password_code(existing_code.code, db)
-            raise ForgotPasswordCodeExpired
         else:
             raise ForgotPasswordExists
 
@@ -132,6 +133,14 @@ def send_forgot_password_code(username: str, db: Session) -> None:
 
 
 def change_password_with_code(change_password_dto: ChangeForgottenPassword, db: Session):
+    """
+    Change Forgotten password
+    :param change_password_dto:
+    :param db:
+    :raises UserNotFound:
+    :raises NoForgotPasswordCode:
+    :return:
+    """
 
     hashed_password: str
 
@@ -149,3 +158,4 @@ def change_password_with_code(change_password_dto: ChangeForgottenPassword, db: 
     hashed_password = hash_password(change_password_dto.password)
 
     change_password_for_user_with_id(app_user.id, hashed_password, db)
+    deactivate_forgotten_password_code(forgot_password_code, db)
