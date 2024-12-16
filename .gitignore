@@ -2,3 +2,4 @@
 /documentation/time_me.txt
 /.env
 /test/data_import/
+*/__pycache__/

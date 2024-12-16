@@ -1,4 +1,4 @@
-table = "sales_y_m_w_ym"
+table = "sales_p_y_m_w_ym"
 schema = "olap"
 database = "olap_db1"
 base_table = "false"
