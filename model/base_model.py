@@ -15,6 +15,7 @@ user_olap_table = Table(
     Base.metadata,
     Column("user_id", ForeignKey("comradewolf.app_user.id"), primary_key=True),
     Column("olap_id", ForeignKey("comradewolf.olap_table.id"), primary_key=True),
+    schema="comradewolf",
 )
 
 

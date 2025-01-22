@@ -1,10 +1,11 @@
 import json
+from typing import Type
 
 from sqlalchemy.orm import Session
 
 from core.utils.exceptions import UserAlreadyExists, UserWithMailAlreadyExists, NoConfirmationCode, UserNotFound, \
-    NoForgotPasswordCode
-from model.base_model import SavedQuery, AppUser, ConfirmationCode, ForgotPasswordCode
+    NoForgotPasswordCode, NoCubesForUser
+from model.base_model import SavedQuery, AppUser, ConfirmationCode, ForgotPasswordCode, OlapTable, user_olap_table
 from model.dto import QueryMetaData
 
 
@@ -156,6 +157,21 @@ def get_user_by_id(user_id: int, db: Session):
     app_user: AppUser | None = db.query(AppUser).filter(AppUser.id == user_id).first()
 
     return app_user
+
+def get_olap_tables_by_user(user: AppUser, db:Session) -> list[Type[OlapTable]]:
+    """
+
+    :param user:
+    :param db:
+    :return:
+    """
+
+    olap_tables = db.query(OlapTable).filter(OlapTable.app_users.any(OlapTable.app_users.contains(user))).all()
+
+    if len(olap_tables) == 0:
+        raise NoCubesForUser(user.username, user.id)
+
+    return olap_tables
 
 def change_password_for_user_with_id(user_id: int, password: str, db: Session):
     app_user: AppUser = get_user_by_id(user_id, db)

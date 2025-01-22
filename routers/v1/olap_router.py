@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from core.database import get_db
+from core.utils.exceptions import NoCubesForUser
 from model.base_model import SavedQuery
-from model.dto import FrontendFieldsJson, QueryMetaData, QueryDTO, FrontendDistinctJson
+from model.dto import FrontendFieldsJson, QueryMetaData, QueryDTO, FrontendDistinctJson, AvailableCubes
 from service.db import save_query_meta_data
 from service.cube import CubeCollection
 from service.security import get_user_from_jwt, cube_security_check
+from service.user import get_available_cubes_for_user
 
 router = APIRouter()
 
@@ -104,3 +106,18 @@ def get_dimension(cube_name: str, dimension_field: FrontendDistinctJson, request
     result = cubes.select_dimension(cube_name, dimension_field)
 
     return result
+
+@router.get("/v1/cube/available")
+def get_available_cubes(username: str = Depends(get_user_from_jwt), db: Session = Depends(get_db)):
+    """
+    Lists all available cubes
+    :param username:
+    :param db:
+    :return:
+    """
+    try:
+        cubes: AvailableCubes = get_available_cubes_for_user(username, db)
+    except NoCubesForUser:
+        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail=f"Доступных кубов нет")
+
+    return cubes
