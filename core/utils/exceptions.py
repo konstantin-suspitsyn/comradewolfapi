@@ -12,6 +12,7 @@ USER_IS_NOT_ACTIVE = 11
 PASSWORD_CODE_EXPIRED = 12
 PASSWORD_CODE_EXISTS = 13
 NO_FORGOT_PASSWORD_CODE = 14
+NO_CUBES_FOR_USER = 15
 
 class ComradeWolfApiException(Exception):
     """
@@ -162,3 +163,12 @@ class NoForgotPasswordCode(ComradeWolfApiException):
         message: str = f"Password code does not exist"
 
         super().__init__(NO_FORGOT_PASSWORD_CODE, message)
+
+class NoCubesForUser(ComradeWolfApiException):
+    """
+    If user has no cubes assigned to him
+    """
+    def __init__(self, username: str, user_id: int):
+        message: str = f"No Olap Cubes For User #{user_id} {username}"
+
+        super().__init__(NO_CUBES_FOR_USER, message)

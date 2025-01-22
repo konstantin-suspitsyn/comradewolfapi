@@ -88,3 +88,9 @@ class Token(BaseModel):
 class ChangeForgottenPassword(BaseModel):
     forgot_code_token: str
     password: str
+
+class AvailableCubes(BaseModel):
+    """
+    List of available cubes for user
+    """
+    cubes: list[str]
