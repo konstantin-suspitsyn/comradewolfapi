@@ -13,6 +13,7 @@ PASSWORD_CODE_EXPIRED = 12
 PASSWORD_CODE_EXISTS = 13
 NO_FORGOT_PASSWORD_CODE = 14
 NO_CUBES_FOR_USER = 15
+CLASS_NOT_FOUND = 16
 
 class ComradeWolfApiException(Exception):
     """
@@ -172,3 +173,9 @@ class NoCubesForUser(ComradeWolfApiException):
         message: str = f"No Olap Cubes For User #{user_id} {username}"
 
         super().__init__(NO_CUBES_FOR_USER, message)
+
+class ClassNotFoundError(ComradeWolfApiException):
+    def __init__(self, class_key: str):
+        message: str = f"No class was found for {class_key} key"
+
+        super().__init__(CLASS_NOT_FOUND, message)

@@ -171,7 +171,9 @@ def get_available_cubes_for_user(username:str, db: Session) -> AvailableCubes:
     app_user: AppUser = get_user_by_username(username, db)
     olap_tables: list[Type[OlapTable]] = get_olap_tables_by_user(app_user, db)
 
-    available_cubes: AvailableCubes = AvailableCubes()
+    print(olap_tables)
+
+    available_cubes: AvailableCubes = AvailableCubes(cubes=[])
 
     for olap_table in olap_tables:
         available_cubes.cubes.append(olap_table.name)

@@ -29,6 +29,10 @@ class OlapTable(Base):
     port: Mapped[str] = Column(Integer, unique=False)
     username_env: Mapped[str] = Column(String(50), unique=True)
     password_env: Mapped[str] = Column(String(50), unique=True)
+    toml_link: Mapped[str] = Column(String(512), unique=False)
+    engine: Mapped[str] = Column(String(250), unique=False)
+    database: Mapped[str] = Column(String(125), unique=False)
+    max_connections: Mapped[int] = Column(Integer)
     created_at: Mapped[datetime] = Column(DateTime, default=datetime.now)
     updated_at: Mapped[datetime] = Column(DateTime, default=datetime.now)
 

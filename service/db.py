@@ -185,3 +185,7 @@ def deactivate_forgotten_password_code(forgot_password_code: ForgotPasswordCode,
     forgot_password_code.is_active = False
     db.flush()
     db.commit()
+
+def get_all_olap_cubes(db: Session) -> list[Type[OlapTable]]:
+    cubes = db.query(OlapTable).all()
+    return cubes

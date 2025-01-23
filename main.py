@@ -2,14 +2,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from olap_info.olap_sales_cube import set_cube
+from olap_info.olap_sales_cube import set_cubes
 from routers import basic_routes
 
 from routers.v1 import olap_router, user_router
 
 
 def return_postgres_opt():
-    return set_cube()
+    return set_cubes()
 
 structure = {}
 
