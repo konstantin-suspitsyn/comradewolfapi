@@ -27,6 +27,7 @@ def get_front_fields(cube_name: str, request: Request, username: str = Depends(g
     cube_security_check(username, cube_name, db)
 
     cubes: CubeCollection = request.state.cubes
+
     return cubes.get_front_fields(cube_name)
 
 

@@ -1,13 +1,14 @@
 from datetime import datetime, timedelta
 from typing import Type
 
+from setuptools.extern import names
 from sqlalchemy.orm import Session
 
 from core.config import settings
 from core.utils.exceptions import UserNotFound, WrongPassword, NoConfirmationCode, UserIsActiveAlready, \
     CodeActivationExpired, UserIsNotActivated, ForgotPasswordExists, NoForgotPasswordCode
 from model.base_model import AppUser, ConfirmationCode, ForgotPasswordCode, OlapTable
-from model.dto import UserRegisterDTO, ChangeForgottenPassword, AvailableCubes
+from model.dto import UserRegisterDTO, ChangeForgottenPassword, AvailableCubes, OlapCube
 from service.db import create_user, get_confirmation_code, deactivate_code_for_user, set_user_active, \
     get_user_by_username, get_forgot_password_code_by_username, create_forgot_password_code, deactivate_password_code, \
     get_forgot_password_code_by_code, get_user_by_id, change_password_for_user_with_id, \
@@ -171,11 +172,9 @@ def get_available_cubes_for_user(username:str, db: Session) -> AvailableCubes:
     app_user: AppUser = get_user_by_username(username, db)
     olap_tables: list[Type[OlapTable]] = get_olap_tables_by_user(app_user, db)
 
-    print(olap_tables)
-
     available_cubes: AvailableCubes = AvailableCubes(cubes=[])
 
     for olap_table in olap_tables:
-        available_cubes.cubes.append(olap_table.name)
+        available_cubes.cubes.append(OlapCube(id=olap_table.id, name=olap_table.name))
 
     return available_cubes
