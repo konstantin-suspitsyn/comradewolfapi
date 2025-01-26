@@ -3,3 +3,4 @@
 /.env
 /test/data_import/
 */__pycache__/
+/.ipynb_checkpoints/

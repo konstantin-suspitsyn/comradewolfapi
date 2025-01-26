@@ -12,7 +12,7 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 
-from core.database import get_db
+from core.database import get_db, get_session
 from model.base_model import OlapTable
 from service.cube import CubeCollection
 from service.db import get_all_olap_cubes
@@ -22,10 +22,10 @@ from service.optimizer_postgres import OptimizerPostgres
 
 load_dotenv()
 
-async def set_cubes() -> CubeCollection:
+def set_cubes() -> CubeCollection:
     cubes_collection = CubeCollection()
 
-    session: Session = await get_db()
+    session: Session = get_session()
     possible_cubes: list[Type[OlapTable]] = get_all_olap_cubes(session)
 
     for cube in possible_cubes:

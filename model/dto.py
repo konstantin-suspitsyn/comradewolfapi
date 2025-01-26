@@ -89,8 +89,12 @@ class ChangeForgottenPassword(BaseModel):
     forgot_code_token: str
     password: str
 
+class OlapCube(BaseModel):
+    id: int
+    name: str
+
 class AvailableCubes(BaseModel):
     """
     List of available cubes for user
     """
-    cubes: list[str]
+    cubes: list[OlapCube]
