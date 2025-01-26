@@ -5,12 +5,13 @@ from comradewolf.universe.olap_service import OlapService
 from comradewolf.universe.olap_structure_generator import OlapStructureGenerator
 from comradewolf.utils.olap_data_types import OlapFrontend, SelectCollection, OlapFrontendToBackend, OlapFilterFrontend, \
     OlapTablesCollection, SelectFilter
+from docutils.nodes import field
 from sqlalchemy import Sequence, RowMapping, CursorResult
 from sqlalchemy.orm import Session
 
 from core.utils.exceptions import NoCubeInCollection
 from model.base_model import SavedQuery
-from model.dto import FrontendFieldsJson, QueryMetaData, FrontendDistinctJson
+from model.dto import FrontendFieldsJson, QueryMetaData, FrontendDistinctJson, FrontFieldsDTO, FrontFieldProperty
 from service.optimizer_interface import OptimizerAbstract
 
 
@@ -42,7 +43,7 @@ class CubeCollection(UserDict):
             "olap_service": olap_service,
         }
 
-    def get_front_fields(self, cube_name: str) -> OlapFrontend:
+    def get_front_fields(self, cube_name: str) -> FrontFieldsDTO:
         """
         Return front fields of cube
         :param cube_name: name of the cube
@@ -54,7 +55,19 @@ class CubeCollection(UserDict):
 
         self.__is_cube_in_collection(cube_name)
 
-        return self.data[cube_name]["olap_frontend_fields"]
+        olap_frontend: OlapFrontend = self.data[cube_name]["olap_frontend_fields"]
+
+        front_fields_dto: FrontFieldsDTO = FrontFieldsDTO(fields=[])
+
+        for field_name_alias in olap_frontend:
+            front_fields_dto.fields.append(FrontFieldProperty(
+                field_name=field_name_alias,
+                field_type=olap_frontend.get_field_type(field_name_alias),
+                front_name=olap_frontend.get_front_name(field_name_alias),
+                data_type=olap_frontend.get_data_type(field_name_alias),
+            ))
+
+        return front_fields_dto
 
     def get_olap_structure(self, cube_name: str) -> OlapStructureGenerator:
         """

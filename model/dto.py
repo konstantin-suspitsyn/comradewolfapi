@@ -98,3 +98,13 @@ class AvailableCubes(BaseModel):
     List of available cubes for user
     """
     cubes: list[OlapCube]
+
+class FrontFieldProperty(BaseModel):
+    field_name: str
+    field_type: str
+    front_name: str
+    data_type: str
+
+
+class FrontFieldsDTO(BaseModel):
+    fields: list[FrontFieldProperty]

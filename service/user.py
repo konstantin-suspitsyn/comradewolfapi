@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Type
 
-from setuptools.extern import names
 from sqlalchemy.orm import Session
 
 from core.config import settings
