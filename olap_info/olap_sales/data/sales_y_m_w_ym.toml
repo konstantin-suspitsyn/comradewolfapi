@@ -1,10 +1,10 @@
 table = "sales_y_m_w_ym"
 schema = "olap"
-database = "olap_db1"
+database = "olap_db"
 base_table = "false"
 
 [fields]
-order_count = {field_type = "dimension", alias = "order_id_alias", calculation_type = "none", following_calculation = "none", front_name = "Номер заказа", data_type="number"}
+order_count = {field_type = "dimension", alias = "order_id_alias", calculation_type = "count", following_calculation = "none", front_name = "Номер заказа", data_type="number"}
 sum_qty_order = {field_type = "value", alias = "qty_order_alias", calculation_type = "sum", following_calculation = "sum", front_name = "Кол-во заказанного", data_type="number"}
 avg_price = {field_type = "dimension", alias = "price_alias", calculation_type = "avg", following_calculation = "none", front_name = "Цена", data_type="number"}
 year_f = {field_type = "dimension", alias = "year_f_alias", calculation_type = "none", following_calculation = "none", front_name = "Год", data_type="number"}

@@ -43,9 +43,9 @@ class CubeCollection(UserDict):
             "olap_service": olap_service,
         }
 
-    def get_front_fields(self, cube_name: str) -> FrontFieldsDTO:
+    def get_front_fields(self, cube_name: str) -> OlapFrontend:
         """
-        Return front fields of cube
+        Return front fields DTO of cube
         :param cube_name: name of the cube
 
         :raises NoCubeInCollection: if  :param cube_name: was not found in collection
@@ -56,6 +56,22 @@ class CubeCollection(UserDict):
         self.__is_cube_in_collection(cube_name)
 
         olap_frontend: OlapFrontend = self.data[cube_name]["olap_frontend_fields"]
+
+        return olap_frontend
+
+    def get_front_fields_dto(self, cube_name: str) -> FrontFieldsDTO:
+        """
+        Return front fields DTO of cube
+        :param cube_name: name of the cube
+
+        :raises NoCubeInCollection: if  :param cube_name: was not found in collection
+
+        :return: Frontend fields with types and names
+        """
+
+        self.__is_cube_in_collection(cube_name)
+
+        olap_frontend: OlapFrontend = self.get_front_fields(cube_name)
 
         front_fields_dto: FrontFieldsDTO = FrontFieldsDTO(fields=[])
 
@@ -149,6 +165,7 @@ class CubeCollection(UserDict):
         frontend_dict: dict = front_data.model_dump(mode='json')
 
         optimizer: OptimizerAbstract = self.get_optimizer(cube_name)
+
         select_collection: SelectCollection = self.get_all_queries(cube_name, frontend_dict, add_order_by)
         query_meta_data: QueryMetaData = optimizer.get_query_meta_data(cube_name, select_collection)
 

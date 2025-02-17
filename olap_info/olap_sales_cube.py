@@ -12,13 +12,12 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 
-from core.database import get_db, get_session
+from core.database import get_session
 from model.base_model import OlapTable
 from service.cube import CubeCollection
 from service.db import get_all_olap_cubes
 from service.optimizer_factory import OptimizerFactory, SelectBuilderFactory
 from service.optimizer_interface import OptimizerAbstract
-from service.optimizer_postgres import OptimizerPostgres
 
 load_dotenv()
 
@@ -29,10 +28,10 @@ def set_cubes() -> CubeCollection:
     possible_cubes: list[Type[OlapTable]] = get_all_olap_cubes(session)
 
     for cube in possible_cubes:
-        cube_name = cube.name
-        toml_link = cube.toml_link
-        olap_user = cube.username_env
-        olap_password = cube.password_env
+        cube_name = str(cube.name)
+        toml_link = str(cube.toml_link)
+        olap_user = os.getenv(str(cube.username_env))
+        olap_password = os.getenv(str(cube.password_env))
         olap_host = cube.host
         olap_port = cube.port
         olap_engine_name = str(cube.engine)
