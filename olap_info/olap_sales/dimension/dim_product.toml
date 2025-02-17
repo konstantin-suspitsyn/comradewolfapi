@@ -1,6 +1,6 @@
 table = "dim_product"
 schema = "olap"
-database = "olap_db1"
+database = "olap_db"
 
 [fields]
 id = {field_type = "service_key", alias = "product_id_alias", front_name="none", data_type="number"}

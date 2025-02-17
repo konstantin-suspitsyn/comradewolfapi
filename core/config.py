@@ -16,7 +16,7 @@ class Settings:
                     f"{POSTGRES_DATABASE}")
 
     # If result contains more
-    QUERY_ROW_LIMIT = 5_000_000
+    QUERY_ROW_LIMIT = 1_000_000
     ROWS_PER_PAGE = 100_000
 
     # Auth settings

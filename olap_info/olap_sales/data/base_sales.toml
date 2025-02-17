@@ -1,6 +1,6 @@
 table = "sales_base"
 schema = "olap"
-database = "olap_db1"
+database = "olap_db"
 base_table = "true"
 
 [fields]

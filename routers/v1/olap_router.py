@@ -28,10 +28,10 @@ def get_front_fields(cube_name: str, request: Request, username: str = Depends(g
 
     cubes: CubeCollection = request.state.cubes
 
-    return cubes.get_front_fields(cube_name)
+    return cubes.get_front_fields_dto(cube_name)
 
 
-@router.get("/v1/cube/{cube_name}/query_info")
+@router.post("/v1/cube/{cube_name}/query_info")
 def get_query_info(cube_name: str, front_data: FrontendFieldsJson, request: Request, db: Session = Depends(get_db),
                    username: str = Depends(get_user_from_jwt)) -> QueryDTO:
     """
