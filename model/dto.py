@@ -108,3 +108,13 @@ class FrontFieldProperty(BaseModel):
 
 class FrontFieldsDTO(BaseModel):
     fields: list[FrontFieldProperty]
+
+class FilterDataFromColumnDTO(BaseModel):
+    distinct_data: list[str] | list[int] | list[float]
+
+class FrontDistinct(BaseModel):
+    field_name: str
+    type: FilterTypes
+
+class FrontDistinctDTO(BaseModel):
+    SELECT_DISTINCT: FrontDistinct

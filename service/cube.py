@@ -4,14 +4,14 @@ from comradewolf.universe.olap_prompt_converter_service import OlapPromptConvert
 from comradewolf.universe.olap_service import OlapService
 from comradewolf.universe.olap_structure_generator import OlapStructureGenerator
 from comradewolf.utils.olap_data_types import OlapFrontend, SelectCollection, OlapFrontendToBackend, OlapFilterFrontend, \
-    OlapTablesCollection, SelectFilter
-from docutils.nodes import field
+    OlapTablesCollection, SelectFilter, TableForFilter
 from sqlalchemy import Sequence, RowMapping, CursorResult
 from sqlalchemy.orm import Session
 
 from core.utils.exceptions import NoCubeInCollection
 from model.base_model import SavedQuery
-from model.dto import FrontendFieldsJson, QueryMetaData, FrontendDistinctJson, FrontFieldsDTO, FrontFieldProperty
+from model.dto import FrontendFieldsJson, QueryMetaData, FrontendDistinctJson, FrontFieldsDTO, FrontFieldProperty, \
+    FilterDataFromColumnDTO, FrontDistinctDTO
 from service.optimizer_interface import OptimizerAbstract
 
 
@@ -243,3 +243,50 @@ class CubeCollection(UserDict):
         dimension_from_db: CursorResult = optimizer.select_dimension(select_filter)
 
         return dimension_from_db.mappings().all()
+
+    def get_distinct_data_from_column(self, cube_name: str, field_name: FrontDistinctDTO) -> FilterDataFromColumnDTO:
+        """
+        Returns distinct values from specified column
+        :param cube_name: name of the cube
+        :param field_name: column name
+        :return:
+        """
+        optimizer: OptimizerAbstract = self.get_optimizer(cube_name)
+        # Get all possible select distinct queries
+        select_collection: SelectFilter = self.get_distinct_data(cube_name, field_name)
+
+        dimension_res_from_db: CursorResult = optimizer.select_dimension(select_collection)
+
+        filter_data: FilterDataFromColumnDTO = FilterDataFromColumnDTO(distinct_data=list(dimension_res_from_db))
+
+        return filter_data
+
+
+
+    def get_distinct_data(self, cube_name: str, field_dto: FrontDistinctDTO) -> SelectFilter:
+        """
+        Get all select distinct queries
+        :param cube_name:
+        :param field_dto:
+        :return:
+        """
+        frontend_dict: dict = field_dto.model_dump(mode='json')
+
+        front_to_back = OlapFilterFrontend(frontend_dict)
+
+        olap_service: OlapService = self.get_olap_service(cube_name)
+        olap_structure_generator: OlapStructureGenerator = self.get_olap_structure(cube_name)
+
+        all_tables_with_field = olap_service.get_tables_with_field(front_to_back.get_field_alias_name(),
+                                                                   olap_structure_generator.get_tables_collection())
+
+        tables: list[TableForFilter] = olap_service.get_tables_for_filter(front_to_back.get_field_alias_name(),
+                                                                          all_tables_with_field,
+                                                                          olap_structure_generator.get_tables_collection())
+
+        select_filter: SelectFilter = olap_service.generate_filter_select(tables, front_to_back.get_field_alias_name(),
+                                                                          front_to_back.get_select_type(),
+                                                                          olap_structure_generator.get_tables_collection())
+
+        return select_filter
+

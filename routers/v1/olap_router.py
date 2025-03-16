@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, status, HTTPException
+from sqlalchemy.dialects.mssql.information_schema import columns
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from core.database import get_db
 from core.utils.exceptions import NoCubesForUser
 from model.base_model import SavedQuery
-from model.dto import FrontendFieldsJson, QueryMetaData, QueryDTO, FrontendDistinctJson, AvailableCubes
+from model.dto import FrontendFieldsJson, QueryMetaData, QueryDTO, FrontendDistinctJson, AvailableCubes, \
+    FilterDataFromColumnDTO, FrontDistinctDTO
 from service.db import save_query_meta_data
 from service.cube import CubeCollection
 from service.security import get_user_from_jwt, cube_security_check
@@ -17,7 +19,7 @@ router = APIRouter()
 def get_front_fields(cube_name: str, request: Request, username: str = Depends(get_user_from_jwt),
                      db: Session = Depends(get_db)):
     """
-    Query to retrieve info about
+    Get list of fields that are available for user to query
     :param db:
     :param username:
     :param request: standard requests
@@ -122,3 +124,27 @@ def get_available_cubes(username: str = Depends(get_user_from_jwt), db: Session 
         raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail=f"Доступных кубов нет")
 
     return cubes
+
+@router.get("/v1/cube/{cube_name}/filter_data")
+def get_filter_help(cube_name: str, field_dto: FrontDistinctDTO, request: Request,
+                        username: str = Depends(get_user_from_jwt), db: Session = Depends(get_db)) ->\
+        FilterDataFromColumnDTO:
+    """
+    Returns distinct data from dimension table
+    It's used to help users select data in filters
+
+    :param request:
+    :param cube_name: name of the cube
+    :param field_dto: name of the field, and type of select, values of which will be returned
+    :param username: Username from JWT
+    :param db: DB from services
+    :return: list of data (could be string or int or float)
+    """
+
+    cube_security_check(username, cube_name, db)
+
+    cubes: CubeCollection = request.state.cubes
+
+    distinct_values: FilterDataFromColumnDTO = cubes.get_distinct_data_from_column(cube_name, field_dto)
+
+    return distinct_values

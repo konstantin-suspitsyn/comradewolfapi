@@ -18,7 +18,7 @@ def register_user(user_dto: UserRegisterDTO, db: Session = Depends(get_db)) -> M
     Register user
 
     :param user_dto: UserRegisterDTO
-    :param db:
+    :param db: Do not change db
     :return:
     """
 
