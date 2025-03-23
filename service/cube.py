@@ -257,7 +257,8 @@ class CubeCollection(UserDict):
 
         dimension_res_from_db: CursorResult = optimizer.select_dimension(select_collection)
 
-        filter_data: FilterDataFromColumnDTO = FilterDataFromColumnDTO(distinct_data=list(dimension_res_from_db))
+        filter_data: FilterDataFromColumnDTO = FilterDataFromColumnDTO(
+            distinct_data=[item[0] for item in dimension_res_from_db])
 
         return filter_data
 
