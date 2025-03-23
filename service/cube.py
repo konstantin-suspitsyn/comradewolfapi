@@ -8,6 +8,7 @@ from comradewolf.utils.olap_data_types import OlapFrontend, SelectCollection, Ol
 from sqlalchemy import Sequence, RowMapping, CursorResult
 from sqlalchemy.orm import Session
 
+from core.config import settings
 from core.utils.exceptions import NoCubeInCollection
 from model.base_model import SavedQuery
 from model.dto import FrontendFieldsJson, QueryMetaData, FrontendDistinctJson, FrontFieldsDTO, FrontFieldProperty, \
@@ -287,7 +288,8 @@ class CubeCollection(UserDict):
 
         select_filter: SelectFilter = olap_service.generate_filter_select(tables, front_to_back.get_field_alias_name(),
                                                                           front_to_back.get_select_type(),
-                                                                          olap_structure_generator.get_tables_collection())
+                                                                          olap_structure_generator.get_tables_collection(),
+                                                                          settings.MAX_FILTER_VALUES)
 
         return select_filter
 
