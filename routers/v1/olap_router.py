@@ -125,7 +125,7 @@ def get_available_cubes(username: str = Depends(get_user_from_jwt), db: Session 
 
     return cubes
 
-@router.get("/v1/cube/{cube_name}/filter_data")
+@router.post("/v1/cube/{cube_name}/filter_data")
 def get_filter_help(cube_name: str, field_dto: FrontDistinctDTO, request: Request,
                         username: str = Depends(get_user_from_jwt), db: Session = Depends(get_db)) ->\
         FilterDataFromColumnDTO:

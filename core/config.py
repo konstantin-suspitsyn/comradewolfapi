@@ -19,6 +19,8 @@ class Settings:
     QUERY_ROW_LIMIT = 1_000_000
     ROWS_PER_PAGE = 100_000
 
+    MAX_FILTER_VALUES = 1_000
+
     # Auth settings
     SECRET_KEY: str = os.getenv("SECRET_KEY")
     ALGORITHM: str = os.getenv("ALGORITHM")
