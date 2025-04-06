@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from core.database import get_db
-from core.utils.exceptions import NoCubesForUser
+from core.utils.exceptions import NoCubesForUser, TooManyRows
 from model.base_model import SavedQuery
 from model.dto import FrontendFieldsJson, QueryMetaData, QueryDTO, FrontendDistinctJson, AvailableCubes, \
     FilterDataFromColumnDTO, FrontDistinctDTO
@@ -55,8 +55,12 @@ def get_query_info(cube_name: str, front_data: FrontendFieldsJson, request: Requ
     front_data_dict: dict = front_data.model_dump(mode='json')
 
     cubes: CubeCollection = request.state.cubes
-
-    query_info: QueryMetaData = cubes.get_query_meta(cube_name, front_data, add_order_by)
+    try:
+        query_info: QueryMetaData = cubes.get_query_meta(cube_name, front_data, add_order_by)
+    except TooManyRows:
+        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail="Слишком много строк выдаче. Попробуйте выставить "
+                                                                    "фильтры или обратитесь к администратору "
+                                                                    "для увеличения лимитов")
 
     qry: SavedQuery = save_query_meta_data(db, query_info, front_data_dict)
 
