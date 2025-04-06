@@ -14,6 +14,7 @@ PASSWORD_CODE_EXISTS = 13
 NO_FORGOT_PASSWORD_CODE = 14
 NO_CUBES_FOR_USER = 15
 CLASS_NOT_FOUND = 16
+TOO_MANY_ROWS = 17
 
 class ComradeWolfApiException(Exception):
     """
@@ -179,3 +180,9 @@ class ClassNotFoundError(ComradeWolfApiException):
         message: str = f"No class was found for {class_key} key"
 
         super().__init__(CLASS_NOT_FOUND, message)
+
+class TooManyRows(ComradeWolfApiException):
+    def __init__(self):
+        message: str = f"Too many rows in select"
+
+        super().__init__(TOO_MANY_ROWS, message)

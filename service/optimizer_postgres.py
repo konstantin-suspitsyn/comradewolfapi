@@ -3,10 +3,10 @@ import time
 from threading import Semaphore
 
 from comradewolf.utils.olap_data_types import SelectCollection, SelectFilter
-from sqlalchemy import Engine, text, CursorResult, Sequence
+from sqlalchemy import Engine, text, CursorResult
 
 from core.config import Settings
-from core.utils.exceptions import NoQuery
+from core.utils.exceptions import NoQuery, TooManyRows
 from model.dto import QueryMetaData
 from service.optimizer_interface import OptimizerAbstract
 
@@ -37,7 +37,7 @@ class OptimizerPostgres(OptimizerAbstract):
         rows_no, is_ok_to_download_data = self.count_rows(sql_query, self.get_max_rows())
 
         if not is_ok_to_download_data:
-            raise RuntimeError
+            raise TooManyRows()
 
         items_per_page: int = self.get_rows_per_page()
         pages: int = math.ceil(rows_no / items_per_page)
@@ -65,17 +65,17 @@ class OptimizerPostgres(OptimizerAbstract):
         engine: Engine = self.get_engine()
 
         self.__connections_semaphore.acquire()
-        print("SEM_START", self.__connections_semaphore)
+        # print("SEM_START", self.__connections_semaphore)
         try:
             with engine.connect() as connect:
                 result = connect.execute(text(sql_query))
         finally:
-            i = 5
-            while i > 0:
-                i = i - 1
-                time.sleep(1)
-                print(i)
-            print("SEM_FINISH", self.__connections_semaphore)
+            # i = 5
+            # while i > 0:
+            #     i = i - 1
+            #     time.sleep(1)
+            #     print(i)
+            # print("SEM_FINISH", self.__connections_semaphore)
             self.__connections_semaphore.release()
 
         return result
